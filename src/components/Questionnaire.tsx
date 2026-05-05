@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { GameState } from '../data';
-import { questions, teamsDatabase } from '../data';
+import { useConfig } from '../ConfigContext';
 import { useStorage } from '../useStorage';
 
 interface QuestionnaireProps {
@@ -9,9 +9,10 @@ interface QuestionnaireProps {
 }
 
 export const Questionnaire: React.FC<QuestionnaireProps> = ({ gameState, setGameState }) => {
+  const { teams, questions } = useConfig();
   const { saveMemberAnswers } = useStorage();
   
-  const team = teamsDatabase.find(t => t.id === gameState.teamId);
+  const team = teams.find(t => t.id === gameState.teamId);
   const currentMember = gameState.currentMember;
   const question = questions[gameState.currentQuestionIndex];
   const totalQuestions = questions.length;

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import type { GameState } from '../data';
-import { questions, teamsDatabase } from '../data';
+import { useConfig } from '../ConfigContext';
 import { useStorage } from '../useStorage';
 
 interface LiveResultsProps {
@@ -9,10 +9,11 @@ interface LiveResultsProps {
 }
 
 export const LiveResults: React.FC<LiveResultsProps> = ({ gameState, setGameState }) => {
+  const { teams, questions } = useConfig();
   const { getTeamAnswers } = useStorage();
   const [timeLeft, setTimeLeft] = useState(15);
   
-  const team = teamsDatabase.find(t => t.id === gameState.teamId);
+  const team = teams.find(t => t.id === gameState.teamId);
   const teamAnswers = getTeamAnswers(gameState.teamId || '');
 
   // Auto reset timer for booth mode

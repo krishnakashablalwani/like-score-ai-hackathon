@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { GameState } from '../data';
-import { teamsDatabase } from '../data';
+import { useConfig } from '../ConfigContext';
 
 interface TeamSelectProps {
   gameState: GameState;
@@ -8,13 +8,14 @@ interface TeamSelectProps {
 }
 
 export const TeamSelect: React.FC<TeamSelectProps> = ({ gameState, setGameState }) => {
+  const { teams } = useConfig();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredTeams = useMemo(() => {
-    return teamsDatabase.filter(team => 
+    return teams.filter(team => 
       team.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm]);
+  }, [searchTerm, teams]);
 
   const handleSelect = (teamId: string) => {
     setGameState({

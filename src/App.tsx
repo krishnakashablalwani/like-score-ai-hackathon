@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { GameState } from './data';
+import { ConfigProvider, useConfig } from './ConfigContext';
 import { Welcome } from './components/Welcome';
 import { TeamSelect } from './components/TeamSelect';
 import { IdentitySelect } from './components/IdentitySelect';
@@ -14,8 +15,27 @@ const initialState: GameState = {
   currentSessionAnswers: []
 };
 
-function App() {
+function AppContent() {
   const [gameState, setGameState] = useState<GameState>(initialState);
+  const { loading, error } = useConfig();
+
+  if (loading) {
+    return (
+      <div className="glass-panel text-center pulse-container" style={{ width: '100%' }}>
+        <h2>Loading...</h2>
+        <p className="subtitle-small">Fetching quiz data</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="glass-panel text-center" style={{ width: '100%' }}>
+        <h2>⚠️ Configuration Error</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
 
   const renderStep = () => {
     switch (gameState.step) {
@@ -34,10 +54,14 @@ function App() {
     }
   };
 
+  return <>{renderStep()}</>;
+}
+
+function App() {
   return (
-    <>
-      {renderStep()}
-    </>
+    <ConfigProvider>
+      <AppContent />
+    </ConfigProvider>
   );
 }
 

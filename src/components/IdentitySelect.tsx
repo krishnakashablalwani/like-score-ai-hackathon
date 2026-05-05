@@ -1,6 +1,6 @@
 import React from 'react';
 import type { GameState } from '../data';
-import { teamsDatabase } from '../data';
+import { useConfig } from '../ConfigContext';
 import { useStorage } from '../useStorage';
 
 interface IdentitySelectProps {
@@ -9,10 +9,11 @@ interface IdentitySelectProps {
 }
 
 export const IdentitySelect: React.FC<IdentitySelectProps> = ({ gameState, setGameState }) => {
+  const { teams } = useConfig();
   const { getTeamAnswers } = useStorage();
   
   if (!gameState.teamId) return null;
-  const team = teamsDatabase.find(t => t.id === gameState.teamId);
+  const team = teams.find(t => t.id === gameState.teamId);
   if (!team) return null;
 
   const teamAnswers = getTeamAnswers(team.id);
