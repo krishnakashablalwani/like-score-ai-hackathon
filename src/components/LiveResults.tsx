@@ -1,0 +1,131 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import type { GameState } from '../data';
+import { questions, teamsDatabase } from '../data';
+import { useStorage } from '../useStorage';
+
+interface LiveResultsProps {
+  gameState: GameState;
+  setGameState: React.Dispatch<React.SetStateAction<GameState>>;
+}
+
+export const LiveResults: React.FC<LiveResultsProps> = ({ gameState, setGameState }) => {
+  const { getTeamAnswers } = useStorage();
+  const [timeLeft, setTimeLeft] = useState(15);
+  
+  const team = teamsDatabase.find(t => t.id === gameState.teamId);
+  const teamAnswers = getTeamAnswers(gameState.teamId || '');
+
+  // Auto reset timer for booth mode
+  useEffect(() => {
+    if (timeLeft <= 0) {
+      setGameState({
+        step: 'welcome',
+        teamId: null,
+        currentMember: null,
+        currentQuestionIndex: 0,
+        currentSessionAnswers: []
+      });
+      return;
+    }
+    const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft, setGameState]);
+
+  const { score, matches, total, isComplete, membersFinished } = useMemo(() => {
+    if (!team) return { score: 0, matches: 0, total: 0, isComplete: false, membersFinished: [] };
+    
+    const totalQuestions = questions.length;
+    let matchingAnswers = 0;
+    
+    const finished = Object.keys(teamAnswers);
+    const complete = finished.length === team.members.length;
+
+    // If not everyone has answered, we wait
+    if (!complete) {
+      return { score: 0, matches: 0, total: totalQuestions, isComplete: complete, membersFinished: finished };
+    }
+
+    // Calculate score ONLY when all members have answered
+    for (let qIdx = 0; qIdx < totalQuestions; qIdx++) {
+      const answersForThisQuestion = finished.map(member => teamAnswers[member][qIdx]);
+      const allMatch = answersForThisQuestion.every(val => val !== undefined && val === answersForThisQuestion[0]);
+      if (allMatch) {
+        matchingAnswers++;
+      }
+    }
+
+    const calculatedScore = Math.round((matchingAnswers / totalQuestions) * 100);
+    return { score: calculatedScore, matches: matchingAnswers, total: totalQuestions, isComplete: complete, membersFinished: finished };
+  }, [team, teamAnswers]);
+
+  if (!team) return null;
+
+  const isWinner = score >= 90 && isComplete;
+
+  const getCircleColor = () => {
+    if (!isComplete && membersFinished.length < 2) return 'var(--primary-color)';
+    if (score >= 90) return 'var(--success-color)';
+    if (score >= 50) return '#f59e0b';
+    return 'var(--error-color)';
+  };
+
+  return (
+    <div className="glass-panel text-center slide-in" style={{ width: '100%' }}>
+      {isComplete ? (
+        <h1>FINAL LIKE SCORE!</h1>
+      ) : (
+        <h1>LIVE LIKE SCORE</h1>
+      )}
+      
+      <p className="subtitle-small">
+        {membersFinished.length} / {team.members.length} players completed
+      </p>
+
+      {!isComplete ? (
+        <div className="fade-in" style={{ margin: '3rem 0' }}>
+          {membersFinished.length === 1 ? (
+            <h2>You're the first one!</h2>
+          ) : (
+            <h2>Looking good so far...</h2>
+          )}
+          <p>Tell the rest of <strong>{team.name}</strong> to come to the booth and finish so you can reveal your final Like score!</p>
+        </div>
+      ) : (
+        <>
+          <div className="result-circle fade-in heartbeat" style={{ borderColor: getCircleColor(), boxShadow: `0 0 30px ${getCircleColor()}40` }}>
+            <h3 style={{ color: getCircleColor(), textShadow: `0 0 10px ${getCircleColor()}80` }}>{score}%</h3>
+            <span>{matches} / {total} MATCHES</span>
+          </div>
+
+          {isWinner ? (
+            <div className="fade-in">
+              <h2 className="glitch-small" data-text="JACKPOT!">JACKPOT!</h2>
+              <p>Your team is perfectly in sync!</p>
+              <div className="gift-box bounce">
+                <h3>🎁 WINNER!</h3>
+                <p>Show this code to the booth staff:</p>
+                <div className="gift-code">SUPER-TEAM-99</div>
+              </div>
+            </div>
+          ) : (
+            <div className="fade-in">
+              <h2 style={{ color: getCircleColor() }}>NOT QUITE! 😬</h2>
+              <p>Maybe it's time for a team-building exercise?</p>
+            </div>
+          )}
+        </>
+      )}
+
+      <div style={{ marginTop: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+        Resetting screen in {timeLeft}s...
+      </div>
+      <button 
+        className="btn-secondary" 
+        onClick={() => setTimeLeft(0)} 
+        style={{ marginTop: '1rem' }}
+      >
+        FINISH NOW
+      </button>
+    </div>
+  );
+};
