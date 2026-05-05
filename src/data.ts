@@ -73,7 +73,7 @@ export const teamsDatabase: TeamData[] = [
   { id: '5', name: 'QA Squad', members: ['Kevin', 'Laura'] },
 ];
 
-export type Step = 'welcome' | 'team_select' | 'identity_select' | 'questionnaire' | 'live_results' | 'admin';
+export type Step = 'welcome' | 'team_select' | 'identity_select' | 'questionnaire' | 'live_results';
 
 export interface GameState {
   step: Step;

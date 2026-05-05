@@ -35,9 +35,13 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ gameState, setGame
       });
       setSelectedOption(null);
     } else {
-      // Finished!
-      // Save to local storage
-      saveMemberAnswers(team.id, currentMember, newAnswers);
+      // Finished! Resolve indices to answer text for readable storage
+      const resolvedAnswers = newAnswers.map((ansIdx, qIdx) => {
+        const q = questions[qIdx];
+        const opts = q.options.length > 0 ? q.options : team.members;
+        return opts[ansIdx] || String(ansIdx);
+      });
+      saveMemberAnswers(team.id, team.name, currentMember, resolvedAnswers);
       
       setGameState({
         ...gameState,
