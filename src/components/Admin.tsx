@@ -44,7 +44,7 @@ export const Admin: React.FC<AdminProps> = ({ setGameState }) => {
 
   if (!isAuthenticated) {
     return (
-      <div className="glass-panel text-center slide-in" style={{ width: '100%', maxWidth: '400px' }}>
+      <div className="glass-panel text-center slide-in" style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}>
         <h2>Admin Access</h2>
         <div style={{ margin: '1.5rem 0' }}>
           <input 
@@ -101,7 +101,7 @@ export const Admin: React.FC<AdminProps> = ({ setGameState }) => {
   }
 
   return (
-    <div className="glass-panel" style={{ width: '100%', maxWidth: '800px', textAlign: 'left' }}>
+    <div className="glass-panel" style={{ width: '100%', maxWidth: '800px', textAlign: 'left', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <h2>Admin Dashboard</h2>
         <button className="btn-secondary" onClick={() => setGameState(prev => ({ ...prev, step: 'welcome' }))}>
@@ -114,14 +114,34 @@ export const Admin: React.FC<AdminProps> = ({ setGameState }) => {
           className="btn-secondary" 
           style={{ background: 'var(--success-color)', color: '#000', borderColor: 'var(--success-color)' }}
           onClick={() => {
-            const csvContent = "data:text/csv;charset=utf-8," 
-              + "Team Name,Members Completed,Total Members,Matches,Like Score,Status\n"
-              + progressData.map(t => {
-                  const status = t.membersCompleted === 0 ? "Not Started" : t.membersCompleted === t.members.length ? "Finished" : "In Progress";
-                  const scoreDisplay = t.membersCompleted === t.members.length ? `${t.score}%` : "Pending";
-                  return `"${t.name}",${t.membersCompleted},${t.members.length},${t.matches},${scoreDisplay},${status}`;
-              }).join("\n");
-              
+            // Build header: Team Name, Member Name, Q1..Q10, Like Score, Status
+            const qHeaders = questions.map((_, i) => `Q${i + 1}`).join(",");
+            const header = `Team Name,Member Name,${qHeaders},Like Score,Status`;
+
+            const rows: string[] = [];
+            progressData.forEach(team => {
+              const teamAnswers = globalAnswers[team.id] || {};
+              const status = team.membersCompleted === 0 ? "Not Started" : team.membersCompleted === team.members.length ? "Finished" : "In Progress";
+              const scoreDisplay = team.membersCompleted === team.members.length ? `${team.score}%` : "Pending";
+
+              team.members.forEach(member => {
+                const memberAnswers = teamAnswers[member];
+                const answerCells = questions.map((q, qIdx) => {
+                  if (!memberAnswers || memberAnswers[qIdx] === undefined) return "";
+                  const ansIdx = memberAnswers[qIdx];
+                  // Resolve answer to readable text
+                  if (q.options.length === 0) {
+                    // Member-name question – answer index maps to a team member
+                    return `"${team.members[ansIdx] ?? ansIdx}"`;
+                  }
+                  return `"${q.options[ansIdx] ?? ansIdx}"`;
+                }).join(",");
+
+                rows.push(`"${team.name}","${member}",${answerCells},${scoreDisplay},${status}`);
+              });
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + header + "\n" + rows.join("\n");
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
