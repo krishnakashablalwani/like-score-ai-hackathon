@@ -30,7 +30,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ setGameState }) => {
       </button>
 
       <div style={{ marginBottom: '1rem' }}>
-        <img src="/logo.jpg" alt="Logo" style={{ maxWidth: '200px', height: 'auto' }} />
+        <img src="/logo.png" alt="Logo" style={{ maxWidth: '300px', height: 'auto' }} />
       </div>
 
       <div className="arcade-title fade-in">
