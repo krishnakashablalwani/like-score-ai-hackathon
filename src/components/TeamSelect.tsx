@@ -12,7 +12,7 @@ export const TeamSelect: React.FC = () => {
   }, [teams, searchTerm]);
 
   return (
-    <div className="glass-panel text-center slide-in" style={{ width: '100%' }}>
+    <div className="glass-panel text-center slide-in scrollable-panel" style={{ width: '100%' }}>
       <h2>SELECT YOUR TEAM</h2>
       <p className="subtitle-small">Find your squad to begin</p>
 

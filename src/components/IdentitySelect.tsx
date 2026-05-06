@@ -21,7 +21,7 @@ export const IdentitySelect: React.FC = () => {
   };
 
   return (
-    <div className="glass-panel text-center slide-in" style={{ width: '100%' }}>
+    <div className="glass-panel text-center slide-in scrollable-panel" style={{ width: '100%' }}>
       <h2 className="team-badge" style={{ display: 'inline-block', padding: '5px 15px', background: 'var(--primary-color)', borderRadius: '10px', fontSize: '1rem', marginBottom: '1rem' }}>{team.name}</h2>
       <h1 style={{ fontSize: '2.5rem', margin: '1rem 0 2rem' }}>WHO ARE YOU?</h1>
 
