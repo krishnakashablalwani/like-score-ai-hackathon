@@ -1,4 +1,3 @@
-import React, { useEffect } from 'react';
 import './index.css';
 import { AppProvider, useApp } from './AppContext';
 import Welcome from './components/Welcome';
