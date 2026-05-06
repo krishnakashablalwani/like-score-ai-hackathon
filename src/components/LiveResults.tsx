@@ -27,18 +27,7 @@ export const LiveResults: React.FC = () => {
     const finished = Object.keys(teamAnswers);
     const complete = finished.length === team.members.length;
 
-    // If not everyone has answered, we can still show partial results or wait
-    // Original logic: calculate score based on ALL members matching
     if (complete) {
-      for (let qIdx = 0; qIdx < totalQuestions; qIdx++) {
-        const answersForThisQuestion = finished.map(member => teamAnswers[member][qIdx]);
-        const allMatch = answersForThisQuestion.every(val => val !== undefined && val === answersForThisQuestion[0]);
-        if (allMatch) {
-          matchingAnswers++;
-        }
-      }
-    } else if (finished.length >= 2) {
-      // Partial matches for those who finished
       for (let qIdx = 0; qIdx < totalQuestions; qIdx++) {
         const answersForThisQuestion = finished.map(member => teamAnswers[member][qIdx]);
         const allMatch = answersForThisQuestion.every(val => val !== undefined && val === answersForThisQuestion[0]);
@@ -77,10 +66,7 @@ export const LiveResults: React.FC = () => {
 
       {!isComplete ? (
         <div className="fade-in" style={{ margin: '2rem 0' }}>
-          <div className="result-circle pulse" style={{ borderColor: getCircleColor(), boxShadow: `0 0 30px ${getCircleColor()}40` }}>
-            <h3 style={{ color: getCircleColor() }}>{score}%</h3>
-            <span>{matches} / {total} MATCHES</span>
-          </div>
+
           <div style={{ marginTop: '2rem' }}>
             {membersFinished.length === 1 ? (
               <h2>You're the first one!</h2>
