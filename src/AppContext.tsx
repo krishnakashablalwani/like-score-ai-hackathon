@@ -18,7 +18,7 @@ interface AppContextType {
   teams: TeamData[];
   questions: Question[];
   globalAnswers: GlobalAnswers;
-  step: 'welcome' | 'team_select' | 'identity_select' | 'questionnaire' | 'live_results' | 'admin';
+  step: 'welcome' | 'team_select' | 'identity_select' | 'questionnaire' | 'live_results';
   teamId: string | null;
   currentMember: string | null;
   currentQuestionIndex: number;
@@ -28,7 +28,7 @@ interface AppContextType {
   saveMemberAnswers: (teamId: string, teamName: string, memberName: string, answers: string[]) => Promise<void>;
   getTeamAnswers: (teamId: string) => Record<string, string[]>;
   refreshData: () => Promise<void>;
-  setStep: (step: 'welcome' | 'team_select' | 'identity_select' | 'questionnaire' | 'live_results' | 'admin') => void;
+  setStep: (step: 'welcome' | 'team_select' | 'identity_select' | 'questionnaire' | 'live_results') => void;
   selectTeam: (teamId: string | null) => void;
   selectMember: (memberName: string | null) => void;
   setQuestionIndex: (index: number) => void;
@@ -48,7 +48,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   // Game State
-  const [step, setStep] = useState<AppContextType['step']>(window.location.pathname === '/admin' ? 'admin' : 'welcome');
+  const [step, setStep] = useState<AppContextType['step']>('welcome');
   const [teamId, setTeamId] = useState<string | null>(null);
   const [currentMember, setCurrentMember] = useState<string | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);

@@ -6,19 +6,10 @@ import TeamSelect from './components/TeamSelect';
 import IdentitySelect from './components/IdentitySelect';
 import Questionnaire from './components/Questionnaire';
 import LiveResults from './components/LiveResults';
-import Admin from './components/Admin';
 
 function AppContent() {
   const { step, loading, teams, error } = useApp();
 
-  // Sync browser URL if step changes to admin (or from admin to welcome)
-  useEffect(() => {
-    if (step === 'admin' && window.location.pathname !== '/admin') {
-      window.history.pushState({}, '', '/admin');
-    } else if (step === 'welcome' && window.location.pathname === '/admin') {
-      window.history.pushState({}, '', '/');
-    }
-  }, [step]);
 
   if (loading && teams.length === 0) {
     return (
@@ -52,8 +43,6 @@ function AppContent() {
         return <Questionnaire />;
       case 'live_results':
         return <LiveResults />;
-      case 'admin':
-        return <Admin />;
       default:
         return <Welcome />;
     }
