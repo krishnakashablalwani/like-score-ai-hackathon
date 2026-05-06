@@ -1,64 +1,59 @@
 import React, { useState } from 'react';
-import type { GameState } from '../data';
-import { useConfig } from '../ConfigContext';
-import { useStorage } from '../useStorage';
+import { useApp } from '../AppContext';
 
-interface QuestionnaireProps {
-  gameState: GameState;
-  setGameState: React.Dispatch<React.SetStateAction<GameState>>;
-}
-
-export const Questionnaire: React.FC<QuestionnaireProps> = ({ gameState, setGameState }) => {
-  const { teams, questions } = useConfig();
-  const { saveMemberAnswers } = useStorage();
-  
-  const team = teams.find(t => t.id === gameState.teamId);
-  const currentMember = gameState.currentMember;
-  const question = questions[gameState.currentQuestionIndex];
-  const totalQuestions = questions.length;
+export const Questionnaire: React.FC = () => {
+  const { 
+    teams, 
+    teamId, 
+    currentMember, 
+    questions, 
+    currentQuestionIndex, 
+    setQuestionIndex,
+    addSessionAnswer,
+    currentSessionAnswers,
+    saveMemberAnswers,
+    setStep 
+  } = useApp();
   
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
+  const team = teams.find(t => t.id === teamId);
   if (!team || !currentMember) return null;
 
-  const options = question.options.length > 0 ? question.options : team.members;
+  const question = questions[currentQuestionIndex];
+  if (!question) return null;
 
-  const handleNext = () => {
+  const totalQuestions = questions.length;
+  
+  // Logic from initial commit: options are either custom or team members
+  const options = question.options && question.options.length > 0 
+    ? question.options 
+    : team.members;
+
+  const handleNext = async () => {
     if (selectedOption === null) return;
 
-    const newAnswers = [...gameState.currentSessionAnswers, selectedOption];
+    const answerValue = options[selectedOption];
+    const newAnswers = [...currentSessionAnswers, answerValue];
+    addSessionAnswer(answerValue);
 
-    if (gameState.currentQuestionIndex < totalQuestions - 1) {
-      setGameState({
-        ...gameState,
-        currentSessionAnswers: newAnswers,
-        currentQuestionIndex: gameState.currentQuestionIndex + 1
-      });
+    if (currentQuestionIndex < totalQuestions - 1) {
+      setQuestionIndex(currentQuestionIndex + 1);
       setSelectedOption(null);
     } else {
-      // Finished! Resolve indices to answer text for readable storage
-      const resolvedAnswers = newAnswers.map((ansIdx, qIdx) => {
-        const q = questions[qIdx];
-        const opts = q.options.length > 0 ? q.options : team.members;
-        return opts[ansIdx] || String(ansIdx);
-      });
-      saveMemberAnswers(team.id, team.name, currentMember, resolvedAnswers);
-      
-      setGameState({
-        ...gameState,
-        currentSessionAnswers: newAnswers,
-        step: 'live_results'
-      });
+      // Finished!
+      await saveMemberAnswers(team.id, team.name, currentMember, newAnswers);
+      setStep('live_results');
     }
   };
 
-  const progressPercentage = ((gameState.currentQuestionIndex + 1) / totalQuestions) * 100;
+  const progressPercentage = ((currentQuestionIndex + 1) / totalQuestions) * 100;
 
   return (
     <div className="glass-panel slide-in" style={{ width: '100%' }}>
       <div className="hud">
         <span className="player-tag">PLAYER: {currentMember.toUpperCase()}</span>
-        <span className="level-tag">Q {gameState.currentQuestionIndex + 1}/{totalQuestions}</span>
+        <span className="level-tag">Q {currentQuestionIndex + 1}/{totalQuestions}</span>
       </div>
       
       <div className="progress-container">
@@ -86,8 +81,10 @@ export const Questionnaire: React.FC<QuestionnaireProps> = ({ gameState, setGame
         onClick={handleNext} 
         disabled={selectedOption === null}
       >
-        {gameState.currentQuestionIndex === totalQuestions - 1 ? 'FINISH' : 'NEXT'}
+        {currentQuestionIndex === totalQuestions - 1 ? 'FINISH' : 'NEXT'}
       </button>
     </div>
   );
 };
+
+export default Questionnaire;

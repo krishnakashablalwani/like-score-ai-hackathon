@@ -1,48 +1,29 @@
 import React from 'react';
-import type { GameState } from '../data';
-import { useConfig } from '../ConfigContext';
-import { useStorage } from '../useStorage';
+import { useApp } from '../AppContext';
 
-interface IdentitySelectProps {
-  gameState: GameState;
-  setGameState: React.Dispatch<React.SetStateAction<GameState>>;
-}
-
-export const IdentitySelect: React.FC<IdentitySelectProps> = ({ gameState, setGameState }) => {
-  const { teams } = useConfig();
-  const { getTeamAnswers } = useStorage();
+export const IdentitySelect: React.FC = () => {
+  const { teams, teamId, getTeamAnswers, selectMember, setStep } = useApp();
   
-  if (!gameState.teamId) return null;
-  const team = teams.find(t => t.id === gameState.teamId);
+  if (!teamId) return null;
+  const team = teams.find(t => t.id === teamId);
   if (!team) return null;
 
   const teamAnswers = getTeamAnswers(team.id);
 
   const handleSelect = (member: string) => {
     if (teamAnswers[member]) {
-      // Already taken! We can either prevent them or let them retake.
-      // For a fun booth experience, let's just let them view live results if they click themselves
-      setGameState({
-        ...gameState,
-        currentMember: member,
-        step: 'live_results',
-      });
+      // If already played, we let them view results
+      selectMember(member);
+      setStep('live_results');
       return;
     }
-
-    setGameState({
-      ...gameState,
-      currentMember: member,
-      currentQuestionIndex: 0,
-      currentSessionAnswers: [],
-      step: 'questionnaire',
-    });
+    selectMember(member);
   };
 
   return (
     <div className="glass-panel text-center slide-in" style={{ width: '100%' }}>
-      <h2 className="team-badge">{team.name}</h2>
-      <h1 style={{ fontSize: '2.5rem', margin: '2rem 0' }}>WHO ARE YOU?</h1>
+      <h2 className="team-badge" style={{ display: 'inline-block', padding: '5px 15px', background: 'var(--primary-color)', borderRadius: '10px', fontSize: '1rem', marginBottom: '1rem' }}>{team.name}</h2>
+      <h1 style={{ fontSize: '2.5rem', margin: '1rem 0 2rem' }}>WHO ARE YOU?</h1>
 
       <div className="identity-grid">
         {team.members.map(member => {
@@ -51,19 +32,23 @@ export const IdentitySelect: React.FC<IdentitySelectProps> = ({ gameState, setGa
             <button 
               key={member} 
               className={`game-btn identity-card ${hasPlayed ? 'played' : ''}`} 
-              onClick={() => handleSelect(member)}
+              onClick={() => !hasPlayed && handleSelect(member)}
+              disabled={hasPlayed}
+              style={hasPlayed ? { cursor: 'not-allowed', opacity: 0.6 } : {}}
             >
-              <div className="avatar">🧑‍🚀</div>
+              <div className="avatar">{hasPlayed ? '✅' : '🧑‍🚀'}</div>
               <h3>{member}</h3>
-              {hasPlayed && <span className="status-badge">DONE</span>}
+              {hasPlayed && <span className="status-badge">COMPLETED</span>}
             </button>
           );
         })}
       </div>
 
-      <button className="btn-secondary" onClick={() => setGameState(prev => ({ ...prev, step: 'team_select' }))} style={{ marginTop: '2rem' }}>
+      <button className="btn-secondary" onClick={() => setStep('team_select')} style={{ marginTop: '2rem' }}>
         BACK
       </button>
     </div>
   );
 };
+
+export default IdentitySelect;

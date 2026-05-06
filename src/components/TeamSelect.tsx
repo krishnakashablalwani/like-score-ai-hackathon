@@ -1,29 +1,15 @@
 import React, { useState, useMemo } from 'react';
-import type { GameState } from '../data';
-import { useConfig } from '../ConfigContext';
+import { useApp } from '../AppContext';
 
-interface TeamSelectProps {
-  gameState: GameState;
-  setGameState: React.Dispatch<React.SetStateAction<GameState>>;
-}
-
-export const TeamSelect: React.FC<TeamSelectProps> = ({ gameState, setGameState }) => {
-  const { teams } = useConfig();
+export const TeamSelect: React.FC = () => {
+  const { teams, selectTeam, setStep } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredTeams = useMemo(() => {
     return teams.filter(team => 
       team.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm, teams]);
-
-  const handleSelect = (teamId: string) => {
-    setGameState({
-      ...gameState,
-      teamId,
-      step: 'identity_select',
-    });
-  };
+  }, [teams, searchTerm]);
 
   return (
     <div className="glass-panel text-center slide-in" style={{ width: '100%' }}>
@@ -55,7 +41,7 @@ export const TeamSelect: React.FC<TeamSelectProps> = ({ gameState, setGameState 
             <button 
               key={team.id} 
               className="game-btn team-card" 
-              onClick={() => handleSelect(team.id)}
+              onClick={() => selectTeam(team.id)}
             >
               <div className="team-icon">👾</div>
               <h3>{team.name}</h3>
@@ -67,9 +53,11 @@ export const TeamSelect: React.FC<TeamSelectProps> = ({ gameState, setGameState 
         )}
       </div>
 
-      <button className="btn-secondary" onClick={() => setGameState(prev => ({ ...prev, step: 'welcome' }))}>
+      <button className="btn-secondary" onClick={() => setStep('welcome')}>
         BACK
       </button>
     </div>
   );
 };
+
+export default TeamSelect;

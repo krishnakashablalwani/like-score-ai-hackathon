@@ -1,36 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import type { GameState } from '../data';
-import { useConfig } from '../ConfigContext';
-import { useStorage } from '../useStorage';
+import { useApp } from '../AppContext';
 
-interface LiveResultsProps {
-  gameState: GameState;
-  setGameState: React.Dispatch<React.SetStateAction<GameState>>;
-}
-
-export const LiveResults: React.FC<LiveResultsProps> = ({ gameState, setGameState }) => {
-  const { teams, questions } = useConfig();
-  const { getTeamAnswers } = useStorage();
+export const LiveResults: React.FC = () => {
+  const { teams, teamId, getTeamAnswers, questions, resetGame } = useApp();
   const [timeLeft, setTimeLeft] = useState(15);
   
-  const team = teams.find(t => t.id === gameState.teamId);
-  const teamAnswers = getTeamAnswers(gameState.teamId || '');
+  const team = teams.find(t => t.id === teamId);
+  const teamAnswers = getTeamAnswers(teamId || '');
 
   // Auto reset timer for booth mode
   useEffect(() => {
     if (timeLeft <= 0) {
-      setGameState({
-        step: 'welcome',
-        teamId: null,
-        currentMember: null,
-        currentQuestionIndex: 0,
-        currentSessionAnswers: []
-      });
+      resetGame();
       return;
     }
     const timer = setInterval(() => setTimeLeft(t => t - 1), 1000);
     return () => clearInterval(timer);
-  }, [timeLeft, setGameState]);
+  }, [timeLeft, resetGame]);
 
   const { score, matches, total, isComplete, membersFinished } = useMemo(() => {
     if (!team) return { score: 0, matches: 0, total: 0, isComplete: false, membersFinished: [] };
@@ -41,23 +27,30 @@ export const LiveResults: React.FC<LiveResultsProps> = ({ gameState, setGameStat
     const finished = Object.keys(teamAnswers);
     const complete = finished.length === team.members.length;
 
-    // If not everyone has answered, we wait
-    if (!complete) {
-      return { score: 0, matches: 0, total: totalQuestions, isComplete: complete, membersFinished: finished };
-    }
-
-    // Calculate score ONLY when all members have answered
-    for (let qIdx = 0; qIdx < totalQuestions; qIdx++) {
-      const answersForThisQuestion = finished.map(member => teamAnswers[member][qIdx]);
-      const allMatch = answersForThisQuestion.every(val => val !== undefined && val === answersForThisQuestion[0]);
-      if (allMatch) {
-        matchingAnswers++;
+    // If not everyone has answered, we can still show partial results or wait
+    // Original logic: calculate score based on ALL members matching
+    if (complete) {
+      for (let qIdx = 0; qIdx < totalQuestions; qIdx++) {
+        const answersForThisQuestion = finished.map(member => teamAnswers[member][qIdx]);
+        const allMatch = answersForThisQuestion.every(val => val !== undefined && val === answersForThisQuestion[0]);
+        if (allMatch) {
+          matchingAnswers++;
+        }
+      }
+    } else if (finished.length >= 2) {
+      // Partial matches for those who finished
+      for (let qIdx = 0; qIdx < totalQuestions; qIdx++) {
+        const answersForThisQuestion = finished.map(member => teamAnswers[member][qIdx]);
+        const allMatch = answersForThisQuestion.every(val => val !== undefined && val === answersForThisQuestion[0]);
+        if (allMatch) {
+          matchingAnswers++;
+        }
       }
     }
 
-    const calculatedScore = Math.round((matchingAnswers / totalQuestions) * 100);
+    const calculatedScore = totalQuestions > 0 ? Math.round((matchingAnswers / totalQuestions) * 100) : 0;
     return { score: calculatedScore, matches: matchingAnswers, total: totalQuestions, isComplete: complete, membersFinished: finished };
-  }, [team, teamAnswers]);
+  }, [team, teamAnswers, questions]);
 
   if (!team) return null;
 
@@ -71,7 +64,7 @@ export const LiveResults: React.FC<LiveResultsProps> = ({ gameState, setGameStat
   };
 
   return (
-    <div className="glass-panel text-center slide-in" style={{ width: '100%' }}>
+    <div className="glass-panel text-center slide-in scrollable-panel" style={{ width: '100%' }}>
       {isComplete ? (
         <h1>FINAL LIKE SCORE!</h1>
       ) : (
@@ -83,13 +76,19 @@ export const LiveResults: React.FC<LiveResultsProps> = ({ gameState, setGameStat
       </p>
 
       {!isComplete ? (
-        <div className="fade-in" style={{ margin: '3rem 0' }}>
-          {membersFinished.length === 1 ? (
-            <h2>You're the first one!</h2>
-          ) : (
-            <h2>Looking good so far...</h2>
-          )}
-          <p>Tell the rest of <strong>{team.name}</strong> to come to the booth and finish so you can reveal your final Like score!</p>
+        <div className="fade-in" style={{ margin: '2rem 0' }}>
+          <div className="result-circle pulse" style={{ borderColor: getCircleColor(), boxShadow: `0 0 30px ${getCircleColor()}40` }}>
+            <h3 style={{ color: getCircleColor() }}>{score}%</h3>
+            <span>{matches} / {total} MATCHES</span>
+          </div>
+          <div style={{ marginTop: '2rem' }}>
+            {membersFinished.length === 1 ? (
+              <h2>You're the first one!</h2>
+            ) : (
+              <h2>Looking good so far...</h2>
+            )}
+            <p>Tell the rest of <strong>{team.name}</strong> to finish so you can reveal your final Like score!</p>
+          </div>
         </div>
       ) : (
         <>
@@ -105,7 +104,7 @@ export const LiveResults: React.FC<LiveResultsProps> = ({ gameState, setGameStat
               <div className="gift-box bounce">
                 <h3>🎁 WINNER!</h3>
                 <p>Show this code to the booth staff:</p>
-                <div className="gift-code">SUPER-TEAM-99</div>
+                <div className="gift-code">LIKE-SCORE-99</div>
               </div>
             </div>
           ) : (
@@ -122,7 +121,7 @@ export const LiveResults: React.FC<LiveResultsProps> = ({ gameState, setGameStat
       </div>
       <button 
         className="btn-secondary" 
-        onClick={() => setTimeLeft(0)} 
+        onClick={() => resetGame()} 
         style={{ marginTop: '1rem' }}
       >
         FINISH NOW
@@ -130,3 +129,5 @@ export const LiveResults: React.FC<LiveResultsProps> = ({ gameState, setGameStat
     </div>
   );
 };
+
+export default LiveResults;

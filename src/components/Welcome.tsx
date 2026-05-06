@@ -1,16 +1,34 @@
 import React from 'react';
-import type { GameState } from '../data';
+import { useApp } from '../AppContext';
 
-interface WelcomeProps {
-  setGameState: React.Dispatch<React.SetStateAction<GameState>>;
-}
+export const Welcome: React.FC = () => {
+  const { setStep } = useApp();
 
-export const Welcome: React.FC<WelcomeProps> = ({ setGameState }) => {
+  const handleAdminClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setStep('admin');
+  };
+
   return (
-    <div className="glass-panel text-center pulse-container" style={{ width: '100%', cursor: 'pointer' }} onClick={() => setGameState(prev => ({ ...prev, step: 'team_select' }))}>
+    <div className="glass-panel text-center pulse-container" style={{ width: '100%', cursor: 'pointer', position: 'relative' }} onClick={() => setStep('team_select')}>
+      <button 
+        onClick={handleAdminClick}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          background: 'transparent',
+          border: 'none',
+          color: 'rgba(255,255,255,0.1)',
+          cursor: 'pointer',
+          zIndex: 10
+        }}
+      >
+        Admin
+      </button>
 
       <div style={{ marginBottom: '1rem' }}>
-        <img src="/logo.png" alt="Logo" style={{ maxWidth: '300px', height: 'auto' }} />
+        <img src="/logo.png" alt="Logo" style={{ maxHeight: '100px', borderRadius: '12px' }} />
       </div>
 
       <div className="arcade-title fade-in">
@@ -30,3 +48,5 @@ export const Welcome: React.FC<WelcomeProps> = ({ setGameState }) => {
     </div>
   );
 };
+
+export default Welcome;

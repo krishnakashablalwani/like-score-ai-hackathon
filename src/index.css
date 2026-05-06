@@ -26,18 +26,21 @@ body {
   background: var(--main-gradient);
   background-attachment: fixed;
   color: var(--text-main);
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
-  overflow: hidden;
+  align-items: center; /* Centered everything */
+  overflow: hidden; /* No scroll by default */
+  padding: 20px;
 }
 
 #root {
   width: 100%;
   max-width: 900px;
-  padding: 20px;
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Background grid effect */
@@ -69,6 +72,23 @@ body::before {
   padding: 50px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(255,255,255,0.05);
   position: relative;
+  max-height: 90vh; /* Keep within viewport */
+}
+
+/* Allow scrolling in results or admin */
+.scrollable-panel {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) transparent;
+}
+
+.scrollable-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollable-panel::-webkit-scrollbar-thumb {
+  background-color: var(--primary-color);
+  border-radius: 10px;
 }
 
 /* Typography */

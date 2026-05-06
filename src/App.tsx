@@ -1,68 +1,75 @@
-import { useState } from 'react';
-import type { GameState } from './data';
-import { ConfigProvider, useConfig } from './ConfigContext';
-import { Welcome } from './components/Welcome';
-import { TeamSelect } from './components/TeamSelect';
-import { IdentitySelect } from './components/IdentitySelect';
-import { Questionnaire } from './components/Questionnaire';
-import { LiveResults } from './components/LiveResults';
-
-const initialState: GameState = {
-  step: 'welcome',
-  teamId: null,
-  currentMember: null,
-  currentQuestionIndex: 0,
-  currentSessionAnswers: []
-};
+import React, { useEffect } from 'react';
+import './index.css';
+import { AppProvider, useApp } from './AppContext';
+import Welcome from './components/Welcome';
+import TeamSelect from './components/TeamSelect';
+import IdentitySelect from './components/IdentitySelect';
+import Questionnaire from './components/Questionnaire';
+import LiveResults from './components/LiveResults';
+import Admin from './components/Admin';
 
 function AppContent() {
-  const [gameState, setGameState] = useState<GameState>(initialState);
-  const { loading, error } = useConfig();
+  const { step, loading, teams, error } = useApp();
 
-  if (loading) {
+  // Sync browser URL if step changes to admin (or from admin to welcome)
+  useEffect(() => {
+    if (step === 'admin' && window.location.pathname !== '/admin') {
+      window.history.pushState({}, '', '/admin');
+    } else if (step === 'welcome' && window.location.pathname === '/admin') {
+      window.history.pushState({}, '', '/');
+    }
+  }, [step]);
+
+  if (loading && teams.length === 0) {
     return (
-      <div className="glass-panel text-center pulse-container" style={{ width: '100%' }}>
-        <h2>Loading...</h2>
-        <p className="subtitle-small">Fetching quiz data</p>
+      <div className="glass-panel text-center" style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}>
+        <div className="avatar heartbeat">👾</div>
+        <h2>LOADING...</h2>
+        <p className="subtitle-small">Booting system</p>
       </div>
     );
   }
 
-  if (error) {
+  if (error && teams.length === 0) {
     return (
-      <div className="glass-panel text-center" style={{ width: '100%' }}>
-        <h2>⚠️ Configuration Error</h2>
+      <div className="glass-panel text-center" style={{ width: '100%', maxWidth: '400px', margin: '0 auto', border: '2px solid var(--error-color)' }}>
+        <h2 style={{ color: 'var(--error-color)' }}>ERROR</h2>
         <p>{error}</p>
+        <button className="btn-primary" onClick={() => window.location.reload()} style={{ marginTop: '1.5rem' }}>RETRY</button>
       </div>
     );
   }
 
   const renderStep = () => {
-    switch (gameState.step) {
+    switch (step) {
       case 'welcome':
-        return <Welcome setGameState={setGameState} />;
+        return <Welcome />;
       case 'team_select':
-        return <TeamSelect gameState={gameState} setGameState={setGameState} />;
+        return <TeamSelect />;
       case 'identity_select':
-        return <IdentitySelect gameState={gameState} setGameState={setGameState} />;
+        return <IdentitySelect />;
       case 'questionnaire':
-        return <Questionnaire gameState={gameState} setGameState={setGameState} />;
+        return <Questionnaire />;
       case 'live_results':
-        return <LiveResults gameState={gameState} setGameState={setGameState} />;
+        return <LiveResults />;
+      case 'admin':
+        return <Admin />;
       default:
-        return <Welcome setGameState={setGameState} />;
+        return <Welcome />;
     }
   };
 
-  return <>{renderStep()}</>;
-}
-
-function App() {
   return (
-    <ConfigProvider>
-      <AppContent />
-    </ConfigProvider>
+    <div id="app-container" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      {renderStep()}
+    </div>
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
+  );
+}
